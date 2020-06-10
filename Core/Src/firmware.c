@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #define FIRMWARE_VERSION_MAJOR 0x00
-#define FIRMWARE_VERSION_MINOR 0x02
+#define FIRMWARE_VERSION_MINOR 0x03
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -113,7 +113,7 @@ void loop() {
     if (transferCompleted) {
         transferCompleted = 0;
 
-        // TODO: read and interpret input
+        HAL_Delay(1);
 
         beginTransfer();
     }
