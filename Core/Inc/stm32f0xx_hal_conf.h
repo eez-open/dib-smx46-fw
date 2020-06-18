@@ -152,7 +152,7 @@
 #define  PREFETCH_ENABLE              1              
 #define  INSTRUCTION_CACHE_ENABLE     0
 #define  DATA_CACHE_ENABLE            0
-#define  USE_SPI_CRC                     0U
+#define  USE_SPI_CRC                     1U
 
 #define  USE_HAL_ADC_REGISTER_CALLBACKS         0U /* ADC register callback disabled       */
 #define  USE_HAL_CAN_REGISTER_CALLBACKS         0U /* CAN register callback disabled       */

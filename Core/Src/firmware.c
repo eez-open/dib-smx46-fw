@@ -4,26 +4,16 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define FIRMWARE_VERSION_MAJOR 0x00
-#define FIRMWARE_VERSION_MINOR 0x03
-
-////////////////////////////////////////////////////////////////////////////////
-
 extern SPI_HandleTypeDef hspi1;
-extern CRC_HandleTypeDef hcrc;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define BUFFER_SIZE 20
+#define BUFFER_SIZE 16
 
 uint8_t output[BUFFER_SIZE];
 uint8_t input[BUFFER_SIZE];
 
-uint32_t *output_CRC = (uint32_t *)(output + BUFFER_SIZE - 4);
-
-int transferCompleted;
-
-int loopOperationIndex;
+volatile int transferCompleted;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -59,10 +49,6 @@ void slaveSynchro(void) {
         }
 		while (!transferCompleted);
 
-//		if (HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&txBuffer, (uint8_t *)&rxBuffer, sizeof(rxBuffer), HAL_MAX_DELAY) != HAL_OK) {
-//			continue;
-//		}
-
 		if (rxBuffer[0] == SPI_MASTER_SYNBYTE) {
 			break;
     	}
@@ -71,25 +57,10 @@ void slaveSynchro(void) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void loopOperation_Dummy() {
-}
-
-typedef void (*LoopOperation)();
-
-LoopOperation loopOperations[] = {
-	loopOperation_Dummy
-};
-
-static const int NUM_LOOP_OPERATIONS = sizeof(loopOperations) / sizeof(LoopOperation);
-
-////////////////////////////////////////////////////////////////////////////////
-
 void beginTransfer() {
     for (int i = 0; i < BUFFER_SIZE; i++) {
     	output[i] = i;
     }
-
-    *output_CRC = HAL_CRC_Calculate(&hcrc, (uint32_t *)output, BUFFER_SIZE - 4);
 
     HAL_SPI_TransmitReceive_DMA(&hspi1, output, input, BUFFER_SIZE);
 }
@@ -102,24 +73,30 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
     transferCompleted = 1;
 }
 
-void setup() {
-    slaveSynchro();
+////////////////////////////////////////////////////////////////////////////////
 
-    beginTransfer();
-    HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_SET);
+void setup() {
+	//
+
+	//
+
+    slaveSynchro();
 }
 
 void loop() {
-    if (transferCompleted) {
-        transferCompleted = 0;
+    beginTransfer();
+    HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_SET);
 
-        HAL_Delay(1);
+    //
 
-        beginTransfer();
+    //
+
+    while (!transferCompleted) {
     }
+    transferCompleted = 0;
+	HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_RESET);
 
-    LoopOperation loopOperation = loopOperations[loopOperationIndex];
-    loopOperationIndex = (loopOperationIndex + 1) % NUM_LOOP_OPERATIONS;
-    loopOperation();
+    //
+
+	//
 }
-
