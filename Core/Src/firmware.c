@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 extern SPI_HandleTypeDef hspi1;
+extern TIM_HandleTypeDef htim1;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -77,6 +78,10 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 
 void setup() {
 	//
+
+	//HAL_GPIO_WritePin(OUT_EN_GPIO_Port, OUT_EN_Pin, GPIO_PIN_SET);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
 	//
 
