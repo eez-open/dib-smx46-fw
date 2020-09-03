@@ -52,7 +52,6 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,7 +63,6 @@ static void MX_SPI1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -132,7 +130,7 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -145,7 +143,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1;
@@ -271,7 +269,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 1080;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -338,10 +336,10 @@ static void MX_USART1_UART_Init(void)
 
 }
 
-/** 
+/**
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void) 
+static void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
@@ -373,13 +371,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, OUT22_Pin|OUT23_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, OUT0_Pin|OUT1_Pin|OUT2_Pin|OUT3_Pin 
-                          |OUT4_Pin|OUT5_Pin|OUT6_Pin|OUT7_Pin 
+  HAL_GPIO_WritePin(GPIOA, OUT0_Pin|OUT1_Pin|OUT2_Pin|OUT3_Pin
+                          |OUT4_Pin|OUT5_Pin|OUT6_Pin|OUT7_Pin
                           |DIB_IRQ_Pin|K_PWR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, OUT8_Pin|OUT9_Pin|OUT10_Pin|OUT18_Pin 
-                          |OUT19_Pin|OUT11_Pin|OUT12_Pin|OUT13_Pin 
+  HAL_GPIO_WritePin(GPIOB, OUT8_Pin|OUT9_Pin|OUT10_Pin|OUT18_Pin
+                          |OUT19_Pin|OUT11_Pin|OUT12_Pin|OUT13_Pin
                           |OUT14_Pin|OUT15_Pin|OUT16_Pin|OUT17_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -392,22 +390,22 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : OUT0_Pin OUT1_Pin OUT2_Pin OUT3_Pin 
-                           OUT4_Pin OUT5_Pin OUT6_Pin OUT7_Pin 
+  /*Configure GPIO pins : OUT0_Pin OUT1_Pin OUT2_Pin OUT3_Pin
+                           OUT4_Pin OUT5_Pin OUT6_Pin OUT7_Pin
                            DIB_IRQ_Pin K_PWR_Pin */
-  GPIO_InitStruct.Pin = OUT0_Pin|OUT1_Pin|OUT2_Pin|OUT3_Pin 
-                          |OUT4_Pin|OUT5_Pin|OUT6_Pin|OUT7_Pin 
+  GPIO_InitStruct.Pin = OUT0_Pin|OUT1_Pin|OUT2_Pin|OUT3_Pin
+                          |OUT4_Pin|OUT5_Pin|OUT6_Pin|OUT7_Pin
                           |DIB_IRQ_Pin|K_PWR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : OUT8_Pin OUT9_Pin OUT10_Pin OUT18_Pin 
-                           OUT19_Pin OUT11_Pin OUT12_Pin OUT13_Pin 
+  /*Configure GPIO pins : OUT8_Pin OUT9_Pin OUT10_Pin OUT18_Pin
+                           OUT19_Pin OUT11_Pin OUT12_Pin OUT13_Pin
                            OUT14_Pin OUT15_Pin OUT16_Pin OUT17_Pin */
-  GPIO_InitStruct.Pin = OUT8_Pin|OUT9_Pin|OUT10_Pin|OUT18_Pin 
-                          |OUT19_Pin|OUT11_Pin|OUT12_Pin|OUT13_Pin 
+  GPIO_InitStruct.Pin = OUT8_Pin|OUT9_Pin|OUT10_Pin|OUT18_Pin
+                          |OUT19_Pin|OUT11_Pin|OUT12_Pin|OUT13_Pin
                           |OUT14_Pin|OUT15_Pin|OUT16_Pin|OUT17_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -448,7 +446,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

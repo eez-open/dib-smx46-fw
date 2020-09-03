@@ -3866,11 +3866,14 @@ static void SPI_TxISR_16BIT(struct __SPI_HandleTypeDef *hspi)
 static HAL_StatusTypeDef SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, FlagStatus State,
                                                        uint32_t Timeout, uint32_t Tickstart)
 {
+  // @mvladic IMPORTANT do not remove this loopCounter check, otherwise this function will block if called from interrupt handler
+  // since HAL_GetTick doesn't increment.
+  int loopCounter = 0;
   while ((__HAL_SPI_GET_FLAG(hspi, Flag) ? SET : RESET) != State)
   {
     if (Timeout != HAL_MAX_DELAY)
     {
-      if (((HAL_GetTick() - Tickstart) >= Timeout) || (Timeout == 0U))
+      if (((HAL_GetTick() - Tickstart) >= Timeout) || (Timeout == 0U) || loopCounter > 1000)
       {
         /* Disable the SPI and reset the CRC: the CRC value should be cleared
         on both master and slave sides in order to resynchronize the master
@@ -3900,6 +3903,7 @@ static HAL_StatusTypeDef SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, 
         return HAL_TIMEOUT;
       }
     }
+    loopCounter++;
   }
 
   return HAL_OK;
