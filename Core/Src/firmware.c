@@ -30,15 +30,17 @@ typedef struct {
 static uint32_t g_routes = 0xFFFFFFFF;
 
 static GPIO_TypeDef* g_routePorts[24] = {
-		OUT0_GPIO_Port,  OUT1_GPIO_Port,  OUT2_GPIO_Port,  OUT3_GPIO_Port,  OUT4_GPIO_Port,  OUT5_GPIO_Port,  OUT6_GPIO_Port,  OUT7_GPIO_Port,
-		OUT8_GPIO_Port,  OUT9_GPIO_Port,  OUT10_GPIO_Port, OUT11_GPIO_Port, OUT12_GPIO_Port, OUT13_GPIO_Port, OUT14_GPIO_Port, OUT15_GPIO_Port,
-		OUT16_GPIO_Port, OUT17_GPIO_Port, OUT18_GPIO_Port, OUT19_GPIO_Port, OUT20_GPIO_Port, OUT21_GPIO_Port, OUT22_GPIO_Port, OUT23_GPIO_Port
+	OUT0_GPIO_Port, OUT4_GPIO_Port,  OUT8_GPIO_Port, OUT12_GPIO_Port, OUT16_GPIO_Port, OUT20_GPIO_Port,
+	OUT1_GPIO_Port, OUT5_GPIO_Port,  OUT9_GPIO_Port, OUT13_GPIO_Port, OUT17_GPIO_Port, OUT21_GPIO_Port,
+	OUT2_GPIO_Port, OUT6_GPIO_Port, OUT10_GPIO_Port, OUT14_GPIO_Port, OUT18_GPIO_Port, OUT22_GPIO_Port,
+	OUT3_GPIO_Port, OUT7_GPIO_Port, OUT11_GPIO_Port, OUT15_GPIO_Port, OUT19_GPIO_Port, OUT23_GPIO_Port,
 };
 
 static uint16_t g_routePins[24] = {
-		OUT0_Pin,  OUT1_Pin,  OUT2_Pin,  OUT3_Pin,  OUT4_Pin,  OUT5_Pin,  OUT6_Pin,  OUT7_Pin,
-		OUT8_Pin,  OUT9_Pin,  OUT10_Pin, OUT11_Pin, OUT12_Pin, OUT13_Pin, OUT14_Pin, OUT15_Pin,
-		OUT16_Pin, OUT17_Pin, OUT18_Pin, OUT19_Pin, OUT20_Pin, OUT21_Pin, OUT22_Pin, OUT23_Pin,
+	OUT0_Pin, OUT4_Pin,  OUT8_Pin, OUT12_Pin, OUT16_Pin, OUT20_Pin,
+	OUT1_Pin, OUT5_Pin,  OUT9_Pin, OUT13_Pin, OUT17_Pin, OUT21_Pin,
+	OUT2_Pin, OUT6_Pin, OUT10_Pin, OUT14_Pin, OUT18_Pin, OUT22_Pin,
+	OUT3_Pin, OUT7_Pin, OUT11_Pin, OUT15_Pin, OUT19_Pin, OUT23_Pin,
 };
 
 void setRoutes(uint32_t routes) {
