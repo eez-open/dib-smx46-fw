@@ -147,9 +147,22 @@ void setup() {
 	slaveSynchro();
 }
 
+void SPI1_Init();
+
 void loop() {
     beginTransfer();
-    while (!transferCompleted);
+
+    uint32_t start = HAL_GetTick();
+    while (!transferCompleted) {
+    	int32_t diff = HAL_GetTick() - start;
+    	if (diff > 500) {
+    		HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_RESET);
+    		HAL_SPI_Abort(&hspi1);
+    		HAL_SPI_DeInit(&hspi1);
+    		SPI1_Init();
+    		beginTransfer();
+    	}
+    }
 
     if (transferCompleted == 1) {
 		FromMasterToSlave *data = (FromMasterToSlave *)input;
