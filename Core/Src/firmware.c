@@ -60,12 +60,22 @@ void setRoutes(uint32_t routes) {
 float dac1 = 0.0f;
 float dac2 = 0.0f;
 
+uint32_t dacValueToPwm(float dac) {
+	if (dac < 0) {
+		return 0;
+	}
+	if (dac > 10.0f) {
+		return 1440;
+	}
+	return (uint32_t)roundf(dac * 1440 / 10.0f);
+}
+
 void updateDac1() {
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint32_t)roundf(dac1 * 1440 / 10.0f));
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, dacValueToPwm(dac1));
 }
 
 void updateDac2() {
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, (uint32_t)roundf(dac2 * 1440 / 10.0f));
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, dacValueToPwm(dac2));
 }
 
 void initDac(void) {
