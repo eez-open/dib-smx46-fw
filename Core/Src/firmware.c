@@ -114,36 +114,36 @@ void slaveSynchro(void) {
 
     uint8_t rxBuffer[15];
 
-    while (1) {
-		rxBuffer[0] = 0;
+	while (1) {
+		HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t *)&txBuffer, (uint8_t *)&rxBuffer, sizeof(rxBuffer));
+		HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_RESET);
+		while (!transferCompleted) {
+		}
 
-		transferCompleted = 0;
-        if (HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t *)&txBuffer, (uint8_t *)&rxBuffer, sizeof(rxBuffer)) != HAL_OK) {
-        	continue;
-        }
-		while (!transferCompleted);
-
-		if (transferCompleted == 1 && rxBuffer[0] == SPI_MASTER_SYNBYTE) {
-			break;
+    	if (transferCompleted == 1) {
+    		break;
     	}
-	};
+
+    	HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_RESET);
+    	HAL_Delay(1);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void beginTransfer() {
-    HAL_SPI_TransmitReceive_DMA(&hspi1, output, input, BUFFER_SIZE);
     transferCompleted = 0;
-    HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_SET);
+    HAL_SPI_TransmitReceive_DMA(&hspi1, output, input, BUFFER_SIZE);
+    HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_RESET);
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-	HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_SET);
 	transferCompleted = 1;
 }
 
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-	HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_SET);
     transferCompleted = 2;
 }
 
@@ -155,30 +155,32 @@ void setup() {
 	updateRelay();
 
 	slaveSynchro();
+    beginTransfer();
 }
 
 void loop() {
-    beginTransfer();
-    while (!transferCompleted);
+    if (transferCompleted) {
+    	if (transferCompleted == 1) {
+			FromMasterToSlave *data = (FromMasterToSlave *)input;
 
-    if (transferCompleted == 1) {
-		FromMasterToSlave *data = (FromMasterToSlave *)input;
+			setRoutes(data->routes);
 
-		setRoutes(data->routes);
+			if (data->dac1 != dac1) {
+				dac1 = data->dac1;
+				updateDac1();
+			}
 
-		if (data->dac1 != dac1) {
-			dac1 = data->dac1;
-			updateDac1();
-		}
+			if (data->dac2 != dac2) {
+				dac2 = data->dac2;
+				updateDac2();
+			}
 
-		if (data->dac2 != dac2) {
-			dac2 = data->dac2;
-			updateDac2();
-		}
+			if (data->relayOn != relayOn) {
+				relayOn = data->relayOn;
+				updateRelay();
+			}
+    	}
 
-		if (data->relayOn != relayOn) {
-			relayOn = data->relayOn;
-			updateRelay();
-		}
+	    beginTransfer();
     }
 }

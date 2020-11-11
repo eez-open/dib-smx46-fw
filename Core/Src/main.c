@@ -373,12 +373,15 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, OUT0_Pin|OUT1_Pin|OUT2_Pin|OUT3_Pin
                           |OUT4_Pin|OUT5_Pin|OUT6_Pin|OUT7_Pin
-                          |DIB_IRQ_Pin|K_PWR_Pin, GPIO_PIN_RESET);
+                          |K_PWR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, OUT8_Pin|OUT9_Pin|OUT10_Pin|OUT18_Pin
                           |OUT19_Pin|OUT11_Pin|OUT12_Pin|OUT13_Pin
                           |OUT14_Pin|OUT15_Pin|OUT16_Pin|OUT17_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOF, OUT20_Pin|OUT21_Pin, GPIO_PIN_RESET);
