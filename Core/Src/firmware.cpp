@@ -79,7 +79,7 @@ void updateRelay() {
 ////////////////////////////////////////////////////////////////////////////////
 // master-slave communication
 
-static const uint32_t CONF_SPI_TRANSFER_TIMEOUT_MS = 2000;
+//static const uint32_t CONF_SPI_TRANSFER_TIMEOUT_MS = 2000;
 
 extern "C" void SPI1_Init(void);
 extern SPI_HandleTypeDef hspi1;
@@ -120,17 +120,17 @@ extern "C" void loop() {
     RESET_PIN(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin); // inform master that module is ready for the SPI communication
 
     // wait for the transfer to finish
-	uint32_t startTick = HAL_GetTick();
+//	uint32_t startTick = HAL_GetTick();
 	while (transferState == TRANSFER_STATE_WAIT) {
-		if (HAL_GetTick() - startTick > CONF_SPI_TRANSFER_TIMEOUT_MS) {
-			// transfer is taking too long to finish, maybe something is stuck, abort it
-			__disable_irq();
-			HAL_SPI_Abort(hspiMaster);
-			SET_PIN(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin);
-			transferState = TRANSFER_STATE_ERROR;
-			__enable_irq();
-			break;
-		}
+//		if (HAL_GetTick() - startTick > CONF_SPI_TRANSFER_TIMEOUT_MS) {
+//			// transfer is taking too long to finish, maybe something is stuck, abort it
+//			__disable_irq();
+//			HAL_SPI_Abort(hspiMaster);
+//			SET_PIN(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin);
+//			transferState = TRANSFER_STATE_ERROR;
+//			__enable_irq();
+//			break;
+//		}
 	}
 
 	// Request and Response are defined in firmware.h
