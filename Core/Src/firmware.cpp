@@ -1,4 +1,5 @@
 #include <math.h>
+#include <memory.h>
 
 #include "main.h"
 
@@ -37,35 +38,158 @@ void setRoutes(uint32_t routes) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static float DAC_MIN = 0.0f;
+static float DAC_MAX = 10.0f;
+
 extern TIM_HandleTypeDef htim1;
 
-float dac1 = 0.0f;
-float dac2 = 0.0f;
+float aoutValue[2];
 
 uint32_t dacValueToPwm(float dac) {
-	if (dac < 0) {
+	if (dac < DAC_MIN) {
 		return 0;
 	}
-	if (dac > 10.0f) {
+	if (dac > DAC_MAX) {
 		return 1440;
 	}
 	return (uint32_t)roundf(dac * 1440 / 10.0f);
 }
 
-void updateDac1() {
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, dacValueToPwm(dac1));
-}
-
-void updateDac2() {
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, dacValueToPwm(dac2));
+void updateDac(int i) {
+	__HAL_TIM_SET_COMPARE(&htim1, i == 0 ? TIM_CHANNEL_1 : TIM_CHANNEL_4, dacValueToPwm(aoutValue[i]));
 }
 
 void initDac(void) {
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-	updateDac1();
+	updateDac(0);
 
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-	updateDac2();
+	updateDac(1);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define M_PI_F ((float)M_PI)
+
+static const float TIMER_PERIOD = 1 / 1000.0f;
+
+typedef float (*WaveformFunction)(float);
+typedef void (*TimerTickFunc)(void);
+
+extern TIM_HandleTypeDef htim14;
+
+WaveformParameters dacWaveformParameters[2];
+WaveformFunction waveFormFunc[2];
+float phi[2];
+float dphi[2];
+
+WaveformFunction getWaveformFunction(WaveformParameters &waveformParameters);
+
+void updateWaveform(int i, WaveformParameters &waveformParameters) {
+	__disable_irq();
+
+	if (waveformParameters.waveform != WAVEFORM_NONE) {
+		waveFormFunc[i] = getWaveformFunction(waveformParameters);
+		phi[i] = waveformParameters.phaseShift / 360.0f;
+		dphi[i] = 2.0f * M_PI_F * waveformParameters.frequency * TIMER_PERIOD;
+	}
+
+	memcpy(&dacWaveformParameters[i], &waveformParameters, sizeof(waveformParameters));
+
+	__enable_irq();
+}
+
+float dcf(float t) {
+	return 1.0f;
+}
+
+float trianglef(float t) {
+	float a, b, c;
+
+	if (t < M_PI_F / 2.0f) {
+		a = 0;
+		b = 1;
+		c = 0;
+	} else if (t < 3.0f * M_PI_F / 2.0f) {
+		a = 1;
+		b = -1;
+		c = M_PI_F / 2.0f;
+	} else {
+		a = -1;
+		b = 1;
+		c = 3.0f * M_PI_F / 2.0f;
+	}
+
+	return a + b * (t - c) / (M_PI_F / 2.0f);
+}
+
+float squaref(float t) {
+	if (t < M_PI_F) {
+		return 1.0f;
+	}
+	return -1.0f;
+}
+
+static float g_pulseWidth;
+
+float pulsef(float t) {
+	if (t < g_pulseWidth * 2.0f * M_PI_F / 100.0f) {
+		return 1.0f;
+	}
+	return -1.0f;
+}
+
+float sawtoothf(float t) {
+	return -1.0f + t / M_PI_F;
+}
+
+float arbitraryf(float t) {
+	return 0.0f;
+}
+
+WaveformFunction getWaveformFunction(WaveformParameters &waveformParameters) {
+	if (waveformParameters.waveform == WAVEFORM_DC) {
+		return dcf;
+	} else if (waveformParameters.waveform == WAVEFORM_SINE_WAVE) {
+		return sinf;
+	} else if (waveformParameters.waveform == WAVEFORM_TRIANGLE) {
+		return trianglef;
+	} else if (waveformParameters.waveform == WAVEFORM_SQUARE_WAVE) {
+		return squaref;
+	} else if (waveformParameters.waveform == WAVEFORM_PULSE) {
+		g_pulseWidth = waveformParameters.pulseWidth;
+		return pulsef;
+	} else if (waveformParameters.waveform == WAVEFORM_SAWTOOTH) {
+		return sawtoothf;
+	} else {
+		return arbitraryf;
+	}
+}
+
+void FuncGen_DAC(int i) {
+	auto &waveformParameters = dacWaveformParameters[i];
+
+	g_pulseWidth = waveformParameters.pulseWidth;
+	float value = waveformParameters.offset + waveformParameters.amplitude * waveFormFunc[i](phi[i]);
+
+	phi[i] += dphi[i];
+	if (phi[i] >= 2.0f * M_PI_F) {
+		phi[i] = 0;
+	}
+
+	aoutValue[i] = value;
+	updateDac(i);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (htim == &htim14) {
+		if (dacWaveformParameters[0].waveform != WAVEFORM_NONE) {
+			FuncGen_DAC(0);
+		}
+		if (dacWaveformParameters[1].waveform != WAVEFORM_NONE) {
+			FuncGen_DAC(1);
+		}
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -102,21 +226,24 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static uint32_t input[(sizeof(Request) + 3) / 4 + 1];
+static uint32_t output[(sizeof(Request) + 3) / 4];
+
 // setup is called once at the beginning from the main.c
 extern "C" void setup() {
     setRoutes(0);
 	initDac();
 	updateRelay();
+
+	TIM14->ARR = (uint16_t)(TIMER_PERIOD * 1000000) - 1;
+	HAL_TIM_Base_Start_IT(&htim14);
 }
 
 // loop is called, of course, inside the loop from the main.c
 extern "C" void loop() {
 	// start SPI transfer
-	static const size_t BUFFER_SIZE = 20;
-	uint32_t input[(BUFFER_SIZE + 3) / 4 + 1];
-	uint32_t output[(BUFFER_SIZE + 3) / 4];
     transferState = TRANSFER_STATE_WAIT;
-    HAL_SPI_TransmitReceive_DMA(hspiMaster, (uint8_t *)output, (uint8_t *)input, BUFFER_SIZE);
+    HAL_SPI_TransmitReceive_DMA(hspiMaster, (uint8_t *)output, (uint8_t *)input, sizeof(Request));
     RESET_PIN(DIB_IRQ_GPIO_Port, DIB_IRQ_Pin); // inform master that module is ready for the SPI communication
 
     // wait for the transfer to finish
@@ -159,14 +286,17 @@ extern "C" void loop() {
 		else if (request.command == COMMAND_SET_PARAMS) {
 			setRoutes(request.setParams.routes);
 
-			if (request.setParams.dac1 != dac1) {
-				dac1 = request.setParams.dac1;
-				updateDac1();
-			}
+			for (int i = 0; i < 2; i++) {
+				if (request.setParams.dacWaveformParameters[0].waveform == WAVEFORM_NONE) {
+					if (request.setParams.aoutValue[i] != aoutValue[i]) {
+						aoutValue[i] = request.setParams.aoutValue[i];
+						updateDac(i);
+					}
+				}
 
-			if (request.setParams.dac2 != dac2) {
-				dac2 = request.setParams.dac2;
-				updateDac2();
+				if (memcpy(&dacWaveformParameters[i], &request.setParams.dacWaveformParameters[i], sizeof(dacWaveformParameters[i])) != 0) {
+					updateWaveform(i, request.setParams.dacWaveformParameters[i]);
+				}
 			}
 
 			if (request.setParams.relayOn != relayOn) {

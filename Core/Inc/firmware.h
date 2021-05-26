@@ -7,10 +7,30 @@ enum Command {
     COMMAND_SET_PARAMS = 0x4B723BFF
 };
 
+enum Waveform {
+	WAVEFORM_NONE,
+	WAVEFORM_DC,
+	WAVEFORM_SINE_WAVE,
+	WAVEFORM_TRIANGLE,
+	WAVEFORM_SQUARE_WAVE,
+	WAVEFORM_PULSE,
+	WAVEFORM_SAWTOOTH,
+	WAVEFORM_ARBITRARY
+};
+
+struct WaveformParameters {
+	Waveform waveform;
+	float frequency;
+	float phaseShift;
+	float amplitude;
+	float offset;
+	float pulseWidth;
+};
+
 struct SetParams {
     uint32_t routes;
-    float dac1;
-    float dac2;
+    float aoutValue[2];
+    WaveformParameters dacWaveformParameters[2];
     uint8_t relayOn;
 };
 
