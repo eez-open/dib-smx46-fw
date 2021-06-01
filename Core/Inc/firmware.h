@@ -10,9 +10,11 @@ enum Command {
 enum Waveform {
 	WAVEFORM_NONE,
 	WAVEFORM_DC,
-	WAVEFORM_SINE_WAVE,
+	WAVEFORM_SINE,
+	WAVEFORM_SINE_HALF,
+	WAVEFORM_SINE_RECTIFIED,
 	WAVEFORM_TRIANGLE,
-	WAVEFORM_SQUARE_WAVE,
+	WAVEFORM_SQUARE,
 	WAVEFORM_PULSE,
 	WAVEFORM_SAWTOOTH,
 	WAVEFORM_ARBITRARY
@@ -24,7 +26,7 @@ struct WaveformParameters {
 	float phaseShift;
 	float amplitude;
 	float offset;
-	float pulseWidth;
+	float dutyCycle;
 };
 
 struct SetParams {
@@ -47,6 +49,7 @@ struct Response {
 
     union {
         struct {
+        	uint16_t moduleType;
             uint8_t firmwareMajorVersion;
             uint8_t firmwareMinorVersion;
             uint32_t idw0;

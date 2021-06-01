@@ -100,7 +100,23 @@ void updateWaveform(int i, WaveformParameters &waveformParameters) {
 }
 
 float dcf(float t) {
-	return 1.0f;
+	return 0.0f;
+}
+
+float sineHalff(float t) {
+	if (t < M_PI_F) {
+		return sinf(t);
+	}
+
+	return 0.0f;
+}
+
+float sineRectifiedf(float t) {
+	if (t < M_PI_F) {
+		return sinf(t);
+	}
+
+	return sinf(t - M_PI_F);
 }
 
 float trianglef(float t) {
@@ -130,10 +146,10 @@ float squaref(float t) {
 	return -1.0f;
 }
 
-static float g_pulseWidth;
+static float g_dutyCycle;
 
 float pulsef(float t) {
-	if (t < g_pulseWidth * 2.0f * M_PI_F / 100.0f) {
+	if (t < g_dutyCycle * 2.0f * M_PI_F / 100.0f) {
 		return 1.0f;
 	}
 	return -1.0f;
@@ -150,14 +166,18 @@ float arbitraryf(float t) {
 WaveformFunction getWaveformFunction(WaveformParameters &waveformParameters) {
 	if (waveformParameters.waveform == WAVEFORM_DC) {
 		return dcf;
-	} else if (waveformParameters.waveform == WAVEFORM_SINE_WAVE) {
+	} else if (waveformParameters.waveform == WAVEFORM_SINE) {
 		return sinf;
+	} else if (waveformParameters.waveform == WAVEFORM_SINE_HALF) {
+		return sineHalff;
+	} else if (waveformParameters.waveform == WAVEFORM_SINE_RECTIFIED) {
+		return sineRectifiedf;
 	} else if (waveformParameters.waveform == WAVEFORM_TRIANGLE) {
 		return trianglef;
-	} else if (waveformParameters.waveform == WAVEFORM_SQUARE_WAVE) {
+	} else if (waveformParameters.waveform == WAVEFORM_SQUARE) {
 		return squaref;
 	} else if (waveformParameters.waveform == WAVEFORM_PULSE) {
-		g_pulseWidth = waveformParameters.pulseWidth;
+		g_dutyCycle = waveformParameters.dutyCycle;
 		return pulsef;
 	} else if (waveformParameters.waveform == WAVEFORM_SAWTOOTH) {
 		return sawtoothf;
@@ -169,12 +189,17 @@ WaveformFunction getWaveformFunction(WaveformParameters &waveformParameters) {
 void FuncGen_DAC(int i) {
 	auto &waveformParameters = dacWaveformParameters[i];
 
-	g_pulseWidth = waveformParameters.pulseWidth;
-	float value = waveformParameters.offset + waveformParameters.amplitude * waveFormFunc[i](phi[i]);
+	g_dutyCycle = waveformParameters.dutyCycle;
+	float value;
+	if (waveformParameters.waveform == WAVEFORM_DC) {
+		value = waveformParameters.amplitude;
+	} else {
+		value = waveformParameters.offset + waveformParameters.amplitude * waveFormFunc[i](phi[i]) / 2.0f;
+	}
 
 	phi[i] += dphi[i];
 	if (phi[i] >= 2.0f * M_PI_F) {
-		phi[i] = 0;
+		phi[i] -= 2.0f * M_PI_F;
 	}
 
 	aoutValue[i] = value;
@@ -270,6 +295,8 @@ extern "C" void loop() {
 
 		if (request.command == COMMAND_GET_INFO) {
 			// return back to the master firmware version and MCU id
+			static const uint16_t MODULE_TYPE_DIB_SMX46 = 46;
+			response.getInfo.moduleType = MODULE_TYPE_DIB_SMX46;
 			response.getInfo.firmwareMajorVersion = FIRMWARE_VERSION_MAJOR;
 			response.getInfo.firmwareMinorVersion = FIRMWARE_VERSION_MINOR;
 			response.getInfo.idw0 = HAL_GetUIDw0();
