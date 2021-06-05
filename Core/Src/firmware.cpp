@@ -99,24 +99,26 @@ void updateWaveform(int i, WaveformParameters &waveformParameters) {
 	__enable_irq();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 float dcf(float t) {
 	return 0.0f;
 }
 
-float sineHalff(float t) {
+float sineHalfRectifiedf(float t) {
 	if (t < M_PI_F) {
-		return sinf(t);
+		return 2.0f * sinf(t);
 	}
 
 	return 0.0f;
 }
 
-float sineRectifiedf(float t) {
+float sineFullRectifiedf(float t) {
 	if (t < M_PI_F) {
-		return sinf(t);
+		return 2.0f * sinf(t);
 	}
 
-	return sinf(t - M_PI_F);
+	return 2.0f * sinf(t - M_PI_F);
 }
 
 float trianglef(float t) {
@@ -168,10 +170,10 @@ WaveformFunction getWaveformFunction(WaveformParameters &waveformParameters) {
 		return dcf;
 	} else if (waveformParameters.waveform == WAVEFORM_SINE) {
 		return sinf;
-	} else if (waveformParameters.waveform == WAVEFORM_SINE_HALF) {
-		return sineHalff;
-	} else if (waveformParameters.waveform == WAVEFORM_SINE_RECTIFIED) {
-		return sineRectifiedf;
+	} else if (waveformParameters.waveform == WAVEFORM_HALF_RECTIFIED) {
+		return sineHalfRectifiedf;
+	} else if (waveformParameters.waveform == WAVEFORM_FULL_RECTIFIED) {
+		return sineFullRectifiedf;
 	} else if (waveformParameters.waveform == WAVEFORM_TRIANGLE) {
 		return trianglef;
 	} else if (waveformParameters.waveform == WAVEFORM_SQUARE) {
