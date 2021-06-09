@@ -6,6 +6,9 @@
 #include "firmware.h"
 #include "utils.h"
 
+static const uint32_t CONF_SIGNAL_RELAY_DEBOUNCE_TIME_MS = 10;
+static const uint32_t CONF_POWER_RELAY_DEBOUNCE_TIME_MS = 20;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 static uint32_t g_routes = 0xFFFFFFFF;
@@ -24,7 +27,7 @@ static uint16_t g_routePins[24] = {
 	OUT3_Pin, OUT7_Pin, OUT11_Pin, OUT15_Pin, OUT19_Pin, OUT23_Pin,
 };
 
-void setRoutes(uint32_t routes) {
+bool setRoutes(uint32_t routes) {
 	if (g_routes != routes) {
 		for (int i = 0; i < 24; i++) {
 			uint32_t mask = 1 << i;
@@ -33,7 +36,9 @@ void setRoutes(uint32_t routes) {
 			}
 		}
 		g_routes = routes;
+		return true;
 	}
+	return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -313,7 +318,7 @@ extern "C" void loop() {
 		}
 
 		else if (request.command == COMMAND_SET_PARAMS) {
-			setRoutes(request.setParams.routes);
+			bool signalRelaysChanged = setRoutes(request.setParams.routes);
 
 			for (int i = 0; i < 2; i++) {
 				if (request.setParams.dacWaveformParameters[0].waveform == WAVEFORM_NONE) {
@@ -331,6 +336,9 @@ extern "C" void loop() {
 			if (request.setParams.relayOn != relayOn) {
 				relayOn = request.setParams.relayOn;
 				updateRelay();
+				HAL_Delay(CONF_POWER_RELAY_DEBOUNCE_TIME_MS);
+			} else if (signalRelaysChanged) {
+				HAL_Delay(CONF_SIGNAL_RELAY_DEBOUNCE_TIME_MS);
 			}
 
 			response.setParams.result = 1; // success
