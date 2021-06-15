@@ -95,8 +95,10 @@ void updateWaveform(int i, WaveformParameters &waveformParameters) {
 
 	if (waveformParameters.waveform != WAVEFORM_NONE) {
 		waveFormFunc[i] = getWaveformFunction(waveformParameters);
-		phi[i] = waveformParameters.phaseShift / 360.0f;
-		dphi[i] = 2.0f * M_PI_F * waveformParameters.frequency * TIMER_PERIOD;
+		if (dacWaveformParameters[i].waveform == WAVEFORM_NONE || dacWaveformParameters[i].phaseShift != waveformParameters.phaseShift) {
+			phi[i] = 2.0 * M_PI * waveformParameters.phaseShift / 360.0f;
+		}
+		dphi[i] = 2.0 * M_PI * waveformParameters.frequency * TIMER_PERIOD;
 	}
 
 	memcpy(&dacWaveformParameters[i], &waveformParameters, sizeof(waveformParameters));
