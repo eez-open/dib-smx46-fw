@@ -95,9 +95,7 @@ void updateWaveform(int i, WaveformParameters &waveformParameters) {
 
 	if (waveformParameters.waveform != WAVEFORM_NONE) {
 		waveFormFunc[i] = getWaveformFunction(waveformParameters);
-		if (waveformParameters.resetPhase) {
-			phi[i] = 2.0 * M_PI * waveformParameters.phaseShift / 360.0f;
-		}
+		phi[i] = 2.0 * M_PI * waveformParameters.phaseShift / 360.0f;
 		dphi[i] = 2.0 * M_PI * waveformParameters.frequency * TIMER_PERIOD;
 	}
 
