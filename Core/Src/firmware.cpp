@@ -87,12 +87,13 @@ WaveformParameters dacWaveformParameters[2];
 WaveformFunction waveFormFunc[2];
 float phi[2];
 float dphi[2];
+uint32_t funcGenCounter;
 
 WaveformFunction getWaveformFunction(WaveformParameters &waveformParameters);
 
-void updateWaveform(int i, WaveformParameters &waveformParameters) {
-	__disable_irq();
+#define normalize(value) ((value) - (floorf((value) / (2 * M_PI_F)) * (2 * M_PI_F)))
 
+void updateWaveform(int i, WaveformParameters &waveformParameters) {
 	if (waveformParameters.waveform != WAVEFORM_NONE) {
 		waveFormFunc[i] = getWaveformFunction(waveformParameters);
 		phi[i] = 2.0 * M_PI * waveformParameters.phaseShift / 360.0f;
@@ -100,8 +101,6 @@ void updateWaveform(int i, WaveformParameters &waveformParameters) {
 	}
 
 	memcpy(&dacWaveformParameters[i], &waveformParameters, sizeof(waveformParameters));
-
-	__enable_irq();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -192,17 +191,16 @@ WaveformFunction getWaveformFunction(WaveformParameters &waveformParameters) {
 void FuncGen_DAC(int i) {
 	auto &waveformParameters = dacWaveformParameters[i];
 
+
+	float phi_ = phi[i] + funcGenCounter * dphi[i];
+	phi_ = normalize(phi_);
+
 	g_dutyCycle = waveformParameters.dutyCycle;
 	float value;
 	if (waveformParameters.waveform == WAVEFORM_DC) {
 		value = waveformParameters.amplitude;
 	} else {
-		value = waveformParameters.offset + waveformParameters.amplitude * waveFormFunc[i](phi[i]) / 2.0f;
-	}
-
-	phi[i] += dphi[i];
-	if (phi[i] >= 2.0f * M_PI_F) {
-		phi[i] -= 2.0f * M_PI_F;
+		value = waveformParameters.offset + waveformParameters.amplitude * waveFormFunc[i](phi_) / 2.0f;
 	}
 
 	aoutValue[i] = value;
@@ -214,9 +212,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		if (dacWaveformParameters[0].waveform != WAVEFORM_NONE) {
 			FuncGen_DAC(0);
 		}
+
 		if (dacWaveformParameters[1].waveform != WAVEFORM_NONE) {
 			FuncGen_DAC(1);
 		}
+
+		funcGenCounter++;
 	}
 }
 
@@ -323,11 +324,17 @@ extern "C" void loop() {
 						updateDac(i);
 					}
 				}
+			}
 
+
+			__disable_irq();
+			for (int i = 0; i < 2; i++) {
 				if (memcpy(&dacWaveformParameters[i], &request.setParams.dacWaveformParameters[i], sizeof(dacWaveformParameters[i])) != 0) {
 					updateWaveform(i, request.setParams.dacWaveformParameters[i]);
 				}
 			}
+			funcGenCounter = 0;
+			__enable_irq();
 
 			if (request.setParams.relayOn != relayOn) {
 				relayOn = request.setParams.relayOn;
